@@ -18,6 +18,8 @@ import {
 } from 'react-native';
 import MapView from 'react-native-maps';
 
+var {GooglePlacesAutocomplete} = require('react-native-google-places-autocomplete');
+
 export default class busnapper extends Component {
 
   constructor(props) {
@@ -30,6 +32,12 @@ export default class busnapper extends Component {
       lastPosition: {
         latitude: 49.264,
         longitude: -123.19
+      },
+      region: {
+        latitude: 49.264,
+        longitude: -123.19,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05
       },
       busStopMarkers: [],
       selectedRoute: null,
@@ -117,6 +125,33 @@ export default class busnapper extends Component {
       navigator.geolocation.clearWatch(this.watchID);
     }
 
+    onButtonPressed(data, details = null) {
+      // console.log(data);
+      //     console.log(details);
+          //alert(JSON.stringify(data));
+      let address = data.description;
+      var API = "https://maps.googleapis.com/maps/api/geocode/json?address=" + address + "&key=AIzaSyC4zC0FQBYsOf8E50t00kmC8lzW7nPUn8s";
+      let response = fetch(API, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }}).then((response) => {
+          response.json().then((geocode) => {
+            let lat = geocode.results[0].geometry.location.lat;
+            let long = geocode.results[0].geometry.location.lng;
+            this.setState({region: {latitude: lat, longitude: long}});
+          }).catch((error) => {
+            console.error(error);
+          })
+        }).catch((error) => {
+          console.error(error);
+        });
+    }
+
+    onRegionChange(region) {
+      this.setState({region});
+    }
+
     onRegionChangeComplete(region) {
       this.fetchStopData(region.latitude, region.longitude);
     }
@@ -142,6 +177,42 @@ export default class busnapper extends Component {
     render() {
       return (
         <View style={{ flex: 1 }}>
+        <GooglePlacesAutocomplete
+        placeholder='Enter Destination'
+        minLength={2} // minimum length of text to search
+        autoFocus={false}
+        listViewDisplayed='auto'    // true/false/undefined
+        fetchDetails={true}
+        renderDescription={(row) => row.description} // custom description render
+        onPress={this.onButtonPressed.bind(this)}
+        getDefaultValue={() => {
+          return ''; // text input default value
+        }}
+        query={{
+          // available options: https://developers.google.com/places/web-service/autocomplete
+          key: 'AIzaSyCr1YQ52b_kW7IDE-5e5rEtjuSOuaB8zqA',
+          language: 'en', // language of the results
+        }}
+        styles={{
+          description: {
+            fontWeight: 'bold',
+          },
+          predefinedPlacesDescription: {
+            color: '#1faadb',
+          },
+        }}
+
+        nearbyPlacesAPI='GooglePlacesSearch' // Which API to use: GoogleReverseGeocoding or GooglePlacesSearch
+        GoogleReverseGeocodingQuery={{
+          // available options for GoogleReverseGeocoding API : https://developers.google.com/maps/documentation/geocoding/intro
+        }}
+        GooglePlacesSearchQuery={{
+          // available options for GooglePlacesSearch API : https://developers.google.com/places/web-service/search
+          rankby: 'distance',
+        }}
+
+        debounce={200} // debounce the requests in ms. Set to 0 to remove debounce. By default 200ms.
+      />
         <MapView
         style={{flex:0.75}}
         initialRegion={{
@@ -150,6 +221,8 @@ export default class busnapper extends Component {
           latitudeDelta: 0.05,
           longitudeDelta: 0.05,
         }}
+        region = {this.state.region}
+        onRegionChange = {this.onRegionChange.bind(this)}
         ref = {ref => {this.map = ref; }}
         showsUserLocation = {true}
         onRegionChangeComplete = {this.onRegionChangeComplete.bind(this)}
