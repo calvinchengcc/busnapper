@@ -36,8 +36,8 @@ export default class busnapper extends Component {
       region: {
         latitude: 49.264,
         longitude: -123.19,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02
       },
       busStopMarkers: [],
       selectedRoute: null,
@@ -176,12 +176,12 @@ export default class busnapper extends Component {
 
     render() {
       return (
-        <View style={{ flex: 1 }}>
+        <View style={{flex: 1}}>
         <GooglePlacesAutocomplete
         placeholder='Enter Destination'
         minLength={2} // minimum length of text to search
         autoFocus={false}
-        listViewDisplayed='auto'    // true/false/undefined
+        listViewDisplayed='off'    // true/false/undefined
         fetchDetails={true}
         renderDescription={(row) => row.description} // custom description render
         onPress={this.onButtonPressed.bind(this)}
@@ -214,7 +214,7 @@ export default class busnapper extends Component {
         debounce={200} // debounce the requests in ms. Set to 0 to remove debounce. By default 200ms.
       />
         <MapView
-        style={{flex:0.75}}
+        style={{flex: 4}}
         initialRegion={{
           latitude: this.state.initialPosition.latitude,
           longitude: this.state.initialPosition.longitude,
@@ -237,18 +237,6 @@ export default class busnapper extends Component {
           />
         ))}
         </MapView>
-
-        <View style={{ flex: 0.25}}>
-        <Text> Initial Location:  </Text>
-        <Text> Latitude: {this.state.initialPosition.latitude} </Text>
-        <Text> Longitude: {this.state.initialPosition.longitude} </Text>
-        <Text> Current Location:  </Text>
-        <Text> Latitude: {this.state.lastPosition.latitude} </Text>
-        <Text> Longitude: {this.state.lastPosition.longitude} </Text>
-        </View>
-        <TouchableHighlight onPress={this.buttonPressed} style={{backgroundColor:"grey", height: 50}}>
-        <Text style={{textAlign:'center'}}>"Touch me ;)"</Text>
-        </TouchableHighlight>
         </View>
       );
     }
