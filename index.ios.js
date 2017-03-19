@@ -167,7 +167,6 @@ export default class busnapper extends Component {
           // available options: https://developers.google.com/places/web-service/autocomplete
           key: 'AIzaSyCr1YQ52b_kW7IDE-5e5rEtjuSOuaB8zqA',
           language: 'en', // language of the results
-          types: '(cities)', // default: 'geocode'
         }}
         styles={{
           description: {
@@ -188,7 +187,7 @@ export default class busnapper extends Component {
         }}
 
 
-        filterReverseGeocodingByTypes={['locality', 'administrative_area_level_3']} // filter the reverse geocoding results by types - ['locality', 'administrative_area_level_3'] if you want to display only cities
+        //filterReverseGeocodingByTypes={['locality', 'administrative_area_level_3']} // filter the reverse geocoding results by types - ['locality', 'administrative_area_level_3'] if you want to display only cities
 
         debounce={200} // debounce the requests in ms. Set to 0 to remove debounce. By default 200ms.
       />
