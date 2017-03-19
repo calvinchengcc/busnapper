@@ -60,7 +60,6 @@ export default class busnapper extends Component {
         }}).then((response) => {
           response.json().then((responseStops) => {
             if (typeof responseStops.map !== 'function') {
-              console.warn(`No stops found for (${latitude}, ${longitude}.`);
               return;
             }
             let stops = responseStops.map((responseStop) => {
@@ -218,8 +217,8 @@ export default class busnapper extends Component {
         initialRegion={{
           latitude: this.state.initialPosition.latitude,
           longitude: this.state.initialPosition.longitude,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
         }}
         region = {this.state.region}
         onRegionChange = {this.onRegionChange.bind(this)}
