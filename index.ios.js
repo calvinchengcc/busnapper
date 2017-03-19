@@ -9,6 +9,7 @@ import {
   AppRegistry,
   StyleSheet,
   Text,
+  TouchableHighlight,
   View
 } from 'react-native';
 import MapView from 'react-native-maps';
@@ -40,23 +41,27 @@ export default class busnapper extends Component {
     this.state = {
       busStopMarkers: [
         {
-          id: 61218,
+          key: 61218,
           coordinate: STATUE_OF_LIBERTY
         },
         {
-          id: 81524,
+          key: 81524,
           coordinate: EMPIRE_STATE_BUILDING
         },
         {
-          id: 1512,
+          key: 1512,
           coordinate: BLOOMBERG_HQ
         },
         {
-          id: 362,
+          key: 362,
           coordinate: CENTRAL_PARK
         }
       ]
     };
+  }
+
+  buttonPressed(){
+    alert("Hi")
   }
 
   render() {
@@ -65,15 +70,35 @@ export default class busnapper extends Component {
         <MapView
           style={{flex:1}}
           initialRegion={{
-            latitude: 40.6892,
-            longitude: -74.0445,
+            latitude: 40.7484,
+            longitude: -73.9857,
             latitudeDelta: 0.08,
             longitudeDelta: 0.08,
           }}>
           {this.state.busStopMarkers.map(busStopMarker => (
-            <MapView.Marker coordinate={busStopMarker.coordinate} />
+            <MapView.Marker
+              key={busStopMarker.key}
+              coordinate={busStopMarker.coordinate}
+            />
           ))}
         </MapView>
+        <View style={{flex: 0.2, flexDirection: 'row'}}>
+          <View style={{flex: 0.5}}>
+            <Text> tarLong: </Text>
+            <Text> {"\n"} </Text>
+            <Text> {"\n"} </Text>
+            <Text> tarLat: </Text>
+            </View>
+          <View style={{flex: 0.5}}>
+          <Text> curLong: </Text>
+          <Text> {"\n"} </Text>
+          <Text> {"\n"} </Text>
+          <Text> CurLat: </Text>
+            </View>
+          </View>
+        <TouchableHighlight onPress={this.buttonPressed} style={{backgroundColor:"grey", flex:0.05}}>
+                <Text style={{textAlign:'center'}}>"Touch me ;)"</Text>
+              </TouchableHighlight>
       </View>
     );
   }
