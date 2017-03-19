@@ -69,11 +69,36 @@ export default class busnapper extends Component {
     this.watchID = null;
   }
 
+  async fetchers() {
+      try {
+        let response = await fetch('https://api.translink.ca/RTTIAPI/V1/stops?apiKey=rQef46wC3btmRlRln1gi&lat=49.187706&long=-122.850060', {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        }});
+        let responseStops = await response.json();
+        let stops = responseStops.map((responseStop) => {
+          return {
+            stopNum: responseStop.StopNo,
+            coordinate: {
+              latitude: responseStop.Latitude,
+              longitude: responseStop.Longitude
+            },
+            name: responseStop.Name
+          };
+        });
+              console.log(stops);
+      } catch(error) {
+        console.error(error);
+      }
+    }
+  
   buttonPressed(){
     alert("Hi")
   }
 
   componentDidMount(){
+    this.fetchers();
     navigator.geolocation.getCurrentPosition(
       (position) => {
         var initialPosition = position;
