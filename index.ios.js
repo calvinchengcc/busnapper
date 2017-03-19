@@ -4,7 +4,6 @@
 * @flow
 */
 
-"use strict";
 
 import React, { Component } from 'react';
 import {
@@ -15,26 +14,6 @@ import {
   View
 } from 'react-native';
 import MapView from 'react-native-maps';
-
-const STATUE_OF_LIBERTY = {
-  latitude: 40.6892,
-  longitude: -74.0445
-};
-
-const EMPIRE_STATE_BUILDING = {
-  latitude: 40.7484,
-  longitude: -73.9857
-};
-
-const BLOOMBERG_HQ = {
-  latitude: 40.7620,
-  longitude: -73.9680
-};
-
-const CENTRAL_PARK = {
-  latitude: 40.7829,
-  longitude: -73.9654
-};
 
 export default class busnapper extends Component {
 
@@ -47,31 +26,14 @@ export default class busnapper extends Component {
       lastPosition: {
         coords: {latitude: 0, longitude: 0}
       },
-      busStopMarkers: [
-        {
-          key: 61218,
-          coordinate: STATUE_OF_LIBERTY
-        },
-        {
-          key: 81524,
-          coordinate: EMPIRE_STATE_BUILDING
-        },
-        {
-          key: 1512,
-          coordinate: BLOOMBERG_HQ
-        },
-        {
-          key: 362,
-          coordinate: CENTRAL_PARK
-        }
-      ]
+      busStopMarkers: []
     };
     this.watchID = null;
   }
 
-  async fetchers() {
+  async fetchStopData() {
       try {
-        let response = await fetch('https://api.translink.ca/RTTIAPI/V1/stops?apiKey=rQef46wC3btmRlRln1gi&lat=49.187706&long=-122.850060', {
+        let response = await fetch('https://api.translink.ca/RTTIAPI/V1/stops?apiKey=rQef46wC3btmRlRln1gi&lat=49.264375&long=-123.194138&radius=2000', {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -87,18 +49,19 @@ export default class busnapper extends Component {
             name: responseStop.Name
           };
         });
-              console.log(stops);
+        console.log(stops);
+        this.setState({busStopMarkers: stops})
       } catch(error) {
         console.error(error);
       }
     }
-  
+
   buttonPressed(){
     alert("Hi")
   }
 
   componentDidMount(){
-    this.fetchers();
+    this.fetchStopData();
     navigator.geolocation.getCurrentPosition(
       (position) => {
         var initialPosition = position;
@@ -127,14 +90,14 @@ export default class busnapper extends Component {
       <MapView
       style={{flex:0.75}}
       initialRegion={{
-        latitude: 40.7484,
-        longitude: -73.9857,
-        latitudeDelta: 0.08,
-        longitudeDelta: 0.08,
+        latitude: 49.2477158,
+        longitude: -123.1401784,
+        latitudeDelta: 0.1,
+        longitudeDelta: 0.1,
       }}>
       {this.state.busStopMarkers.map(busStopMarker => (
         <MapView.Marker
-        key={busStopMarker.key}
+        key={busStopMarker.stopNum}
         coordinate={busStopMarker.coordinate}
         />
       ))}
