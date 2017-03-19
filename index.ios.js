@@ -73,61 +73,72 @@ export default class busnapper extends Component {
     alert("Hi")
   }
 
-  componentDidMount(){
+  componentWillMount(){
     navigator.geolocation.getCurrentPosition(
       (position) => {
         var initialPosition = position;
         this.setState({initialPosition});
       },
       (error) => alert(JSON.stringify(error)),
-      {enableHighAccuracy: true}
+                                             
     );
     this.watchID = navigator.geolocation.watchPosition(
       (position) => {
         var lastPosition = position;
         this.setState({lastPosition});
+                                                       
       },
       (error) => alert(JSON.stringify(error)),
       {enableHighAccuracy: true}
     );
+
+ 
   }
 
   componentWillUnmount() {
     navigator.geolocation.clearWatch(this.watchID);
   }
 
-  render() {
-    return (
-      <View style={{ flex: 1 }}>
-      <MapView
-      style={{flex:0.75}}
-      initialRegion={{
-        latitude: 40.7484,
-        longitude: -73.9857,
-        latitudeDelta: 0.08,
-        longitudeDelta: 0.08,
-      }}>
-      {this.state.busStopMarkers.map(busStopMarker => (
-        <MapView.Marker
-        key={busStopMarker.key}
-        coordinate={busStopMarker.coordinate}
-        />
-      ))}
-      </MapView>
-      <View style={{ flex: 0.25}}>
-      <Text> Initial Location:  </Text>
-      <Text> Latitude: {this.state.initialPosition.coords.latitude} </Text>
-      <Text> Longitude: {this.state.initialPosition.coords.longitude} </Text>
-      <Text> Current Location:  </Text>
-      <Text> Latitude: {this.state.lastPosition.coords.latitude} </Text>
-      <Text> Longitude: {this.state.lastPosition.coords.longitude} </Text>
-      </View>
-      <TouchableHighlight onPress={this.buttonPressed} style={{backgroundColor:"grey", height: 50}}>
-      <Text style={{textAlign:'center'}}>"Touch me ;)"</Text>
-      </TouchableHighlight>
-      </View>
-    );
-  }
+    render() {
+       
+        
+        return (
+          <View style={{ flex: 1 }}>
+                <MapView
+                style={{flex:0.75}}
+                initialRegion={{
+                latitude: this.state.initialPosition.coords.latitude,
+                longitude: this.state.initialPosition.coords.longitude,
+                latitudeDelta: 0.08,
+                longitudeDelta: 0.08,
+                }}
+                ref = {ref => {this.map = ref; }}
+                
+                showsUserLocation = {true}
+                
+                />
+                {this.state.busStopMarkers.map(busStopMarker => (
+                                                                 <MapView.Marker
+                                                                 key={busStopMarker.key}
+                                                                 coordinate={busStopMarker.coordinate}
+                                                                 />
+                                                                 ))}
+                
+          <View style={{ flex: 0.25}}>
+          <Text> Initial Location:  </Text>
+          <Text> Latitude: {this.state.initialPosition.coords.latitude} </Text>
+          <Text> Longitude: {this.state.initialPosition.coords.longitude} </Text>
+          <Text> Current Location:  </Text>
+          <Text> Latitude: {this.state.lastPosition.coords.latitude} </Text>
+          <Text> Longitude: {this.state.lastPosition.coords.longitude} </Text>
+          </View>
+          <TouchableHighlight onPress={this.buttonPressed} style={{backgroundColor:"grey", height: 50}}>
+          <Text style={{textAlign:'center'}}>"Touch me ;)"</Text>
+          </TouchableHighlight>
+          </View>
+        );
+    }
+  
 }
 
 const styles = StyleSheet.create({
