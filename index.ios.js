@@ -4,6 +4,8 @@
 * @flow
 */
 
+"use strict";
+
 import React, { Component } from 'react';
 import {
   AppRegistry,
@@ -27,45 +29,61 @@ export default class busnapper extends Component {
         latitude: 49.264,
         longitude: -123.19
       },
-      busStopMarkers: []
+      busStopMarkers: [],
+      selectedRoute: null
     };
     this.watchID = null;
   }
 
-  async fetchStopData() {
-    try {
-      let response = await fetch('https://api.translink.ca/RTTIAPI/V1/stops?apiKey=rQef46wC3btmRlRln1gi&lat=49.264375&long=-123.194138&radius=2000', {
+  fetchStopData(latitude, longitude) {
+      let stopQuery = (this.state.selectedRoute === null) ?
+        '' :
+        `stopNo=${this.state.selectedRoute}`;
+      let requestUrl = `https://api.translink.ca/RTTIAPI/V1/stops` +
+        `?apiKey=rQef46wC3btmRlRln1gi&radius=2000` +
+        `&lat=${latitude.toFixed(6)}&long=${longitude.toFixed(6)}${stopQuery}`;
+      let response = fetch(requestUrl, {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-        }});
-        let responseStops = await response.json();
-        let stops = responseStops.map((responseStop) => {
-          return {
-            stopNum: responseStop.StopNo,
-            name: responseStop.Name,
-            coordinate: {
-              latitude: responseStop.Latitude,
-              longitude: responseStop.Longitude
+        }}).then((response) => {
+          response.json().then((responseStops) => {
+            if (typeof responseStops.map !== 'function') {
+              console.warn(`No stops found for (${latitude}, ${longitude}.`);
+              return;
             }
-          };
+            let stops = responseStops.map((responseStop) => {
+              return {
+                stopNum: responseStop.StopNo,
+                name: responseStop.Name,
+                coordinate: {
+                  latitude: responseStop.Latitude,
+                  longitude: responseStop.Longitude
+                }
+              };
+            });
+            this.setState({busStopMarkers: stops});
+          }).catch((error) => {
+            console.error(error);
+          })
+        }).catch((error) => {
+          console.error(error);
         });
-        this.setState({busStopMarkers: stops});
-      } catch(error) {
-        console.error(error);
-      }
     }
 
     buttonPressed(){
       alert("Hi")
     }
 
-    componentWillMount(){
+    componentWillMount() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          let lat = position.coords.latitude;
+          let lon = position.coords.longitude;
+          this.fetchStopData(lat, lon);
           this.setState({initialPosition: {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
+            latitude: lat,
+            longitude: lon
           }});
         },
         (error) => alert(JSON.stringify(error)),
@@ -80,11 +98,16 @@ export default class busnapper extends Component {
         (error) => alert(JSON.stringify(error)),
         {enableHighAccuracy: true}
       );
-      this.fetchStopData();
     }
 
     componentWillUnmount() {
       navigator.geolocation.clearWatch(this.watchID);
+    }
+
+    onRegionChangeComplete(region) {
+      console.dir(this);
+      console.dir(region);
+      this.fetchStopData(region.latitude, region.longitude);
     }
 
     render() {
@@ -100,6 +123,7 @@ export default class busnapper extends Component {
         }}
         ref = {ref => {this.map = ref; }}
         showsUserLocation = {true}
+        onRegionChangeComplete = {this.onRegionChangeComplete.bind(this)}
         >
         {this.state.busStopMarkers.map(busStopMarker => (
           <MapView.Marker
