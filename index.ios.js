@@ -13,6 +13,7 @@ import {
   StyleSheet,
   Text,
   TouchableHighlight,
+  Vibration,
   View
 } from 'react-native';
 import MapView from 'react-native-maps';
@@ -31,7 +32,8 @@ export default class busnapper extends Component {
         longitude: -123.19
       },
       busStopMarkers: [],
-      selectedRoute: null
+      selectedRoute: null,
+      destination: null
     };
     this.watchID = null;
   }
@@ -94,9 +96,19 @@ export default class busnapper extends Component {
           this.setState({lastPosition: {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
-          }});
-        },
-        (error) => alert(JSON.stringify(error)),
+          }}, () => {
+            if (this.state.destination !== null) {
+              let distance = getDistanceKmBetween(
+                this.state.lastPosition,
+                this.state.destination);
+              console.log(`Distance to dest: ${distance} km`);
+              if (distance < 1) {
+                console.log("Vibrating!!!");
+                Vibration.vibrate();
+              }
+            }
+          });
+        }, (error) => alert(JSON.stringify(error)),
         {enableHighAccuracy: true}
       );
     }
@@ -119,7 +131,10 @@ export default class busnapper extends Component {
         `${stopMarker.stopNum} - ${stopMarker.name}?`,
         [
           {text: 'Nope.', onPress: () => console.log('Cancel pressed')},
-          {text: 'Yes, let me nap!', onPress: () => console.log('OK Pressed')}
+          {text: 'Yes, let me nap!', onPress: () => {
+            console.log('OK Pressed');
+            this.setState({destination: stopMarker.coordinate});
+          }}
         ]
       );
     }
@@ -186,3 +201,18 @@ const styles = StyleSheet.create({
 });
 
 AppRegistry.registerComponent('busnapper', () => busnapper);
+
+function getDistanceKmBetween(coord1, coord2) {
+  var R = 6371; // Radius of the earth in km
+  var dLat = deg2rad(coord1.latitude - coord2.latitude);
+  var dLon = deg2rad(coord1.longitude - coord2.longitude);
+  var a =
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(coord1.latitude)) * Math.cos(deg2rad(coord2.latitude)) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function deg2rad(deg) {
+  return deg * (Math.PI/180)
+}
