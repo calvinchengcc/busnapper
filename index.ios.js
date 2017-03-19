@@ -1,31 +1,130 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
- * @flow
- */
+* Sample React Native App
+* https://github.com/facebook/react-native
+* @flow
+*/
+
+"use strict";
 
 import React, { Component } from 'react';
 import {
   AppRegistry,
   StyleSheet,
   Text,
+  TouchableHighlight,
   View
 } from 'react-native';
 import MapView from 'react-native-maps';
 
+const STATUE_OF_LIBERTY = {
+  latitude: 40.6892,
+  longitude: -74.0445
+};
+
+const EMPIRE_STATE_BUILDING = {
+  latitude: 40.7484,
+  longitude: -73.9857
+};
+
+const BLOOMBERG_HQ = {
+  latitude: 40.7620,
+  longitude: -73.9680
+};
+
+const CENTRAL_PARK = {
+  latitude: 40.7829,
+  longitude: -73.9654
+};
 
 export default class busnapper extends Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      initialPosition: {
+        coords: {latitude: 0, longitude: 0}
+      },
+      lastPosition: {
+        coords: {latitude: 0, longitude: 0}
+      },
+      busStopMarkers: [
+        {
+          key: 61218,
+          coordinate: STATUE_OF_LIBERTY
+        },
+        {
+          key: 81524,
+          coordinate: EMPIRE_STATE_BUILDING
+        },
+        {
+          key: 1512,
+          coordinate: BLOOMBERG_HQ
+        },
+        {
+          key: 362,
+          coordinate: CENTRAL_PARK
+        }
+      ]
+    };
+    this.watchID = null;
+  }
+
+  buttonPressed(){
+    alert("Hi")
+  }
+
+  componentDidMount(){
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        var initialPosition = position;
+        this.setState({initialPosition});
+      },
+      (error) => alert(JSON.stringify(error)),
+      {enableHighAccuracy: true}
+    );
+    this.watchID = navigator.geolocation.watchPosition(
+      (position) => {
+        var lastPosition = position;
+        this.setState({lastPosition});
+      },
+      (error) => alert(JSON.stringify(error)),
+      {enableHighAccuracy: true}
+    );
+  }
+
+  componentWillUnmount() {
+    navigator.geolocation.clearWatch(this.watchID);
+  }
+
   render() {
     return (
-    <View style={{ position: 'relative', height: 500 }}>
-     <MapView
-        style={{flex:1}}
-        initialRegion={{
-          latitude: 40.6892,
-          longitude: -74.0445,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }}/>
+      <View style={{ flex: 1 }}>
+      <MapView
+      style={{flex:0.75}}
+      initialRegion={{
+        latitude: 40.7484,
+        longitude: -73.9857,
+        latitudeDelta: 0.08,
+        longitudeDelta: 0.08,
+      }}>
+      {this.state.busStopMarkers.map(busStopMarker => (
+        <MapView.Marker
+        key={busStopMarker.key}
+        coordinate={busStopMarker.coordinate}
+        />
+      ))}
+      </MapView>
+      <View style={{ flex: 0.25}}>
+      <Text> Initial Location:  </Text>
+      <Text> Latitude: {this.state.initialPosition.coords.latitude} </Text>
+      <Text> Longitude: {this.state.initialPosition.coords.longitude} </Text>
+      <Text> Current Location:  </Text>
+      <Text> Latitude: {this.state.lastPosition.coords.latitude} </Text>
+      <Text> Longitude: {this.state.lastPosition.coords.longitude} </Text>
+      </View>
+      <TouchableHighlight onPress={this.buttonPressed} style={{backgroundColor:"grey", height: 50}}>
+      <Text style={{textAlign:'center'}}>"Touch me ;)"</Text>
+      </TouchableHighlight>
       </View>
     );
   }
