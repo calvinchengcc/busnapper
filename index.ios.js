@@ -181,7 +181,7 @@ export default class busnapper extends Component {
         placeholder='Enter Destination'
         minLength={2} // minimum length of text to search
         autoFocus={false}
-        listViewDisplayed='off'    // true/false/undefined
+        listViewDisplayed='auto'    // true/false/undefined
         fetchDetails={true}
         renderDescription={(row) => row.description} // custom description render
         onPress={this.onButtonPressed.bind(this)}
