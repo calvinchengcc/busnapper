@@ -1,8 +1,10 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
- * @flow
- */
+* Sample React Native App
+* https://github.com/facebook/react-native
+* @flow
+*/
+
+"use strict";
 
 import React, { Component } from 'react';
 import {
@@ -39,6 +41,12 @@ export default class busnapper extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      initialPosition: {
+        coords: {latitude: 0, longitude: 0}
+      },
+      lastPosition: {
+        coords: {latitude: 0, longitude: 0}
+      },
       busStopMarkers: [
         {
           key: 61218,
@@ -58,47 +66,65 @@ export default class busnapper extends Component {
         }
       ]
     };
+    this.watchID = null;
   }
 
   buttonPressed(){
     alert("Hi")
   }
 
+  componentDidMount(){
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        var initialPosition = position;
+        this.setState({initialPosition});
+      },
+      (error) => alert(JSON.stringify(error)),
+      {enableHighAccuracy: true}
+    );
+    this.watchID = navigator.geolocation.watchPosition(
+      (position) => {
+        var lastPosition = position;
+        this.setState({lastPosition});
+      },
+      (error) => alert(JSON.stringify(error)),
+      {enableHighAccuracy: true}
+    );
+  }
+
+  componentWillUnmount() {
+    navigator.geolocation.clearWatch(this.watchID);
+  }
+
   render() {
     return (
-      <View style={{ position: 'relative', height: 500 }}>
-        <MapView
-          style={{flex:1}}
-          initialRegion={{
-            latitude: 40.7484,
-            longitude: -73.9857,
-            latitudeDelta: 0.08,
-            longitudeDelta: 0.08,
-          }}>
-          {this.state.busStopMarkers.map(busStopMarker => (
-            <MapView.Marker
-              key={busStopMarker.key}
-              coordinate={busStopMarker.coordinate}
-            />
-          ))}
-        </MapView>
-        <View style={{flex: 0.2, flexDirection: 'row'}}>
-          <View style={{flex: 0.5}}>
-            <Text> tarLong: </Text>
-            <Text> {"\n"} </Text>
-            <Text> {"\n"} </Text>
-            <Text> tarLat: </Text>
-            </View>
-          <View style={{flex: 0.5}}>
-          <Text> curLong: </Text>
-          <Text> {"\n"} </Text>
-          <Text> {"\n"} </Text>
-          <Text> CurLat: </Text>
-            </View>
-          </View>
-        <TouchableHighlight onPress={this.buttonPressed} style={{backgroundColor:"grey", flex:0.05}}>
-                <Text style={{textAlign:'center'}}>"Touch me ;)"</Text>
-              </TouchableHighlight>
+      <View style={{ flex: 1 }}>
+      <MapView
+      style={{flex:0.75}}
+      initialRegion={{
+        latitude: 40.7484,
+        longitude: -73.9857,
+        latitudeDelta: 0.08,
+        longitudeDelta: 0.08,
+      }}>
+      {this.state.busStopMarkers.map(busStopMarker => (
+        <MapView.Marker
+        key={busStopMarker.key}
+        coordinate={busStopMarker.coordinate}
+        />
+      ))}
+      </MapView>
+      <View style={{ flex: 0.25}}>
+      <Text> Initial Location:  </Text>
+      <Text> Latitude: {this.state.initialPosition.coords.latitude} </Text>
+      <Text> Longitude: {this.state.initialPosition.coords.longitude} </Text>
+      <Text> Current Location:  </Text>
+      <Text> Latitude: {this.state.lastPosition.coords.latitude} </Text>
+      <Text> Longitude: {this.state.lastPosition.coords.longitude} </Text>
+      </View>
+      <TouchableHighlight onPress={this.buttonPressed} style={{backgroundColor:"grey", height: 50}}>
+      <Text style={{textAlign:'center'}}>"Touch me ;)"</Text>
+      </TouchableHighlight>
       </View>
     );
   }
