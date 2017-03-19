@@ -8,6 +8,7 @@
 
 import React, { Component } from 'react';
 import {
+  Alert,
   AppRegistry,
   StyleSheet,
   Text,
@@ -105,9 +106,22 @@ export default class busnapper extends Component {
     }
 
     onRegionChangeComplete(region) {
-      console.dir(this);
-      console.dir(region);
       this.fetchStopData(region.latitude, region.longitude);
+    }
+
+    onMarkerSelected(event) {
+      let stopMarker = this.state.busStopMarkers.find((marker) => {
+        return JSON.stringify(marker.stopNum) == event.nativeEvent.id;
+      });
+      Alert.alert(
+        stopMarker.name,
+        `Do you want to set your destination as ` +
+        `${stopMarker.stopNum} - ${stopMarker.name}?`,
+        [
+          {text: 'Nope.', onPress: () => console.log('Cancel pressed')},
+          {text: 'Yes, let me nap!', onPress: () => console.log('OK Pressed')}
+        ]
+      );
     }
 
     render() {
@@ -128,7 +142,10 @@ export default class busnapper extends Component {
         {this.state.busStopMarkers.map(busStopMarker => (
           <MapView.Marker
           key={busStopMarker.stopNum}
+          identifier={JSON.stringify(busStopMarker.stopNum)}
           coordinate={busStopMarker.coordinate}
+          onPressed={this.onMarkerSelected.bind(this)}
+          onSelect={this.onMarkerSelected.bind(this)}
           />
         ))}
         </MapView>
