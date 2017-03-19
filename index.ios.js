@@ -114,13 +114,17 @@ export default class busnapper extends Component {
         />
       ))}
       </MapView>
-      <View style={{ flex: 0.25}}>
+      <View style={{ flex: 0.25, flexDirection: "row" }}>
+      <View>
       <Text> Initial Location:  </Text>
       <Text> Latitude: {this.state.initialPosition.coords.latitude} </Text>
       <Text> Longitude: {this.state.initialPosition.coords.longitude} </Text>
+      </View>
+      <View>
       <Text> Current Location:  </Text>
       <Text> Latitude: {this.state.lastPosition.coords.latitude} </Text>
       <Text> Longitude: {this.state.lastPosition.coords.longitude} </Text>
+      </View>
       </View>
       <TouchableHighlight onPress={this.buttonPressed} style={{backgroundColor:"grey", height: 50}}>
       <Text style={{textAlign:'center'}}>"Touch me ;)"</Text>
