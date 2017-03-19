@@ -11,21 +11,21 @@ import {
   Text,
   View
 } from 'react-native';
+import MapView from 'react-native-maps';
+
 
 export default class busnapper extends Component {
   render() {
     return (
-      <View style={styles.container}>
-        <Text style={styles.welcome}>
-          Welcome to React Native!
-        </Text>
-        <Text style={styles.instructions}>
-          To get started, edit index.ios.js
-        </Text>
-        <Text style={styles.instructions}>
-          Press Cmd+R to reload,{'\n'}
-          Cmd+D or shake for dev menu
-        </Text>
+    <View style={{ position: 'relative', height: 500 }}>
+     <MapView
+        style={{flex:1}}
+        initialRegion={{
+          latitude: 40.6892,
+          longitude: -74.0445,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        }}/>
       </View>
     );
   }
