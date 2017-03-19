@@ -1,3 +1,6 @@
+# Busnapper
+Never worry about falling asleep on the bus and missing your stop again!
+
 ## Inspiration
 
 Many UBC students face long commutes each day. Of course, one advantage of a long commute is that one can sleep on the bus while heading to and from school. However, this comes with a distinct risk of missing one's stop—something that has surely happened to every student at one point! Our idea was to develop an app that would help mitigate the anxiety of remembering to wake up for one's stop, and thus allow students to get a more restful nap before their first class in the morning!
