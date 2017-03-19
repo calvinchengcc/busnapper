@@ -12,7 +12,8 @@ import {
   StyleSheet,
   Text,
   TouchableHighlight,
-  View
+  View,
+  AsyncStorage
 } from 'react-native';
 import MapView from 'react-native-maps';
 
@@ -68,37 +69,55 @@ export default class busnapper extends Component {
     };
     this.watchID = null;
   }
-
-  async fetchers() {
-      try {
-        let response = await fetch('https://api.translink.ca/RTTIAPI/V1/stops?apiKey=rQef46wC3btmRlRln1gi&lat=49.187706&long=-122.850060', {
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-        }});
-        let responseStops = await response.json();
-        let stops = responseStops.map((responseStop) => {
-          return {
-            stopNum: responseStop.StopNo,
-            coordinate: {
-              latitude: responseStop.Latitude,
-              longitude: responseStop.Longitude
-            },
-            name: responseStop.Name
-          };
-        });
-              console.log(stops);
-      } catch(error) {
-        console.error(error);
+  async InitalizeStopsArray(){
+    try {
+      let value = await AsyncStorage.getItem('@savedStops:');
+      if (value == null){
+        let stopsArray=[];
+        await AsyncStorage.setItem('@savedStops:', JSON.stringify(stopsArray));
       }
+    } catch (error) {
+      console.log(error);
     }
+
+  }
+  async saveStop(stopID){
+    let stopsArray = JSON.parse(await this.getStops());
+    stopsArray.push(stopID);
+    try {
+      await AsyncStorage.setItem('@savedStops:', JSON.stringify(stopsArray));
+    } catch (error) {
+      console.log("Error saving data" + error);
+    }
+  }
   
-  buttonPressed(){
+  async getStops(print){
+    try {
+      const value = await AsyncStorage.getItem('@savedStops:');
+      if (value !== null){
+        if (print){
+          console.log("VALUES: " + value);
+        }
+        return value;
+      }else {
+        console.log("Nothing there.");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+    buttonPressed(){
     alert("Hi")
   }
 
-  componentDidMount(){
-    this.fetchers();
+  async componentDidMount(){
+    await this.InitalizeStopsArray();
+    await this.saveStop(480);
+    await this.saveStop(4);
+    await this.saveStop(99);
+    await this.getStops(1);
+    await this.clearData();
+    await this.getStops(1);
     navigator.geolocation.getCurrentPosition(
       (position) => {
         var initialPosition = position;
@@ -116,6 +135,16 @@ export default class busnapper extends Component {
       {enableHighAccuracy: true}
     );
   }
+  
+  async clearData(){
+    try{
+      AsyncStorage.removeItem('@savedStops:');
+      console.log("Deleted.");
+    }catch(error){
+      console.log(error);
+    }
+  }
+
 
   componentWillUnmount() {
     navigator.geolocation.clearWatch(this.watchID);
