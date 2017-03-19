@@ -4,12 +4,16 @@
 * @flow
 */
 
+"use strict";
+
 import React, { Component } from 'react';
 import {
+  Alert,
   AppRegistry,
   StyleSheet,
   Text,
   TouchableHighlight,
+  Vibration,
   View
 } from 'react-native';
 import MapView from 'react-native-maps';
@@ -35,45 +39,62 @@ export default class busnapper extends Component {
         latitudeDelta: 0.05,
         longitudeDelta: 0.05
       },
-      busStopMarkers: []
+      busStopMarkers: [],
+      selectedRoute: null,
+      destination: null
     };
     this.watchID = null;
   }
 
-  async fetchStopData() {
-    try {
-      let response = await fetch('https://api.translink.ca/RTTIAPI/V1/stops?apiKey=rQef46wC3btmRlRln1gi&lat=49.264375&long=-123.194138&radius=2000', {
+  fetchStopData(latitude, longitude) {
+      let stopQuery = (this.state.selectedRoute === null) ?
+        '' :
+        `stopNo=${this.state.selectedRoute}`;
+      let requestUrl = `https://api.translink.ca/RTTIAPI/V1/stops` +
+        `?apiKey=rQef46wC3btmRlRln1gi&radius=2000` +
+        `&lat=${latitude.toFixed(6)}&long=${longitude.toFixed(6)}${stopQuery}`;
+      let response = fetch(requestUrl, {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-        }});
-        let responseStops = await response.json();
-        let stops = responseStops.map((responseStop) => {
-          return {
-            stopNum: responseStop.StopNo,
-            name: responseStop.Name,
-            coordinate: {
-              latitude: responseStop.Latitude,
-              longitude: responseStop.Longitude
+        }}).then((response) => {
+          response.json().then((responseStops) => {
+            if (typeof responseStops.map !== 'function') {
+              console.warn(`No stops found for (${latitude}, ${longitude}.`);
+              return;
             }
-          };
+            let stops = responseStops.map((responseStop) => {
+              return {
+                stopNum: responseStop.StopNo,
+                name: responseStop.Name,
+                coordinate: {
+                  latitude: responseStop.Latitude,
+                  longitude: responseStop.Longitude
+                }
+              };
+            });
+            this.setState({busStopMarkers: stops});
+          }).catch((error) => {
+            console.error(error);
+          })
+        }).catch((error) => {
+          console.error(error);
         });
-        this.setState({busStopMarkers: stops});
-      } catch(error) {
-        console.error(error);
-      }
     }
 
     buttonPressed(){
       alert("Hi")
     }
 
-    componentWillMount(){
+    componentWillMount() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          let lat = position.coords.latitude;
+          let lon = position.coords.longitude;
+          this.fetchStopData(lat, lon);
           this.setState({initialPosition: {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
+            latitude: lat,
+            longitude: lon
           }});
         },
         (error) => alert(JSON.stringify(error)),
@@ -83,45 +104,74 @@ export default class busnapper extends Component {
           this.setState({lastPosition: {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
-          }});
-        },
-        (error) => alert(JSON.stringify(error)),
+          }}, () => {
+            if (this.state.destination !== null) {
+              let distance = getDistanceKmBetween(
+                this.state.lastPosition,
+                this.state.destination);
+              console.log(`Distance to dest: ${distance} km`);
+              if (distance < 1) {
+                console.log("Vibrating!!!");
+                Vibration.vibrate();
+              }
+            }
+          });
+        }, (error) => alert(JSON.stringify(error)),
         {enableHighAccuracy: true}
       );
-      this.fetchStopData();
     }
 
     componentWillUnmount() {
       navigator.geolocation.clearWatch(this.watchID);
     }
 
-    onRegionChange(region) {
-      this.setState({region});
-    }
-
     onButtonPressed(data, details = null) {
       // console.log(data);
       //     console.log(details);
           //alert(JSON.stringify(data));
-      let address = data.description; 
+      let address = data.description;
       var API = "https://maps.googleapis.com/maps/api/geocode/json?address=" + address + "&key=AIzaSyC4zC0FQBYsOf8E50t00kmC8lzW7nPUn8s";
       let response = fetch(API, {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         }}).then((response) => {
-            response.json().then(
-              (geocode) => {
-                let lat = geocode.results[0].geometry.location.lat;
-                let long = geocode.results[0].geometry.location.lng;
-                this.setState({region: {latitude: lat, longitude: long}});
-                alert("lat: " + lat + ", long: " + long);
-              }).catch((error) => {
-                console.error(error);
-              })
+          response.json().then((geocode) => {
+            let lat = geocode.results[0].geometry.location.lat;
+            let long = geocode.results[0].geometry.location.lng;
+            this.setState({region: {latitude: lat, longitude: long}});
           }).catch((error) => {
-              console.error(error);
-            });
+            console.error(error);
+          })
+        }).catch((error) => {
+          console.error(error);
+        });
+    }
+
+    onRegionChange(region) {
+      this.setState({region});
+    }
+
+    onRegionChangeComplete(region) {
+      this.fetchStopData(region.latitude, region.longitude);
+    }
+
+    onMarkerSelected(event) {
+      let stopMarker = this.state.busStopMarkers.find((marker) => {
+        return JSON.stringify(marker.stopNum) == event.nativeEvent.id;
+      });
+      Alert.alert(
+        stopMarker.name,
+        `Do you want to set your destination as ` +
+        `${stopMarker.stopNum} - ${stopMarker.name}?`,
+        [
+          {text: 'Nope.', onPress: () => console.log('Cancel pressed')},
+          {text: 'Yes, let me nap!', onPress: () => {
+            console.log('OK Pressed');
+            this.setState({destination: stopMarker.coordinate});
+          }}
+        ]
+      );
     }
 
     render() {
@@ -135,31 +185,6 @@ export default class busnapper extends Component {
         fetchDetails={true}
         renderDescription={(row) => row.description} // custom description render
         onPress={this.onButtonPressed.bind(this)}
-      //   (data, details = null) => { // 'details' is provided when fetchDetails = true
-      //     console.log(data);
-      //     console.log(details);
-      //     //alert(JSON.stringify(data));
-      //     let address = data.description; 
-      //     var API = "https://maps.googleapis.com/maps/api/geocode/json?address=" + address + "&key=AIzaSyC4zC0FQBYsOf8E50t00kmC8lzW7nPUn8s";
-      //     let response = fetch(API, {
-      //       headers: {
-      //         'Accept': 'application/json',
-      //         'Content-Type': 'application/json',
-      //       }}).then((response) => {
-      //           response.json().then(
-      //             (geocode) => {
-      //               let lat = geocode.results[0].geometry.location.lat;
-      //               let long = geocode.results[0].geometry.location.lng;
-      //               this.setState({region: {latitude: lat, longitude: long}});
-      //               alert("lat: " + lat + ", long: " + long);
-      //             }).catch((error) => {
-      //               console.error(error);
-      //             })
-      //         }).catch((error) => {
-      //             console.error(error);
-      //           });
-      //   }
-      // }
         getDefaultValue={() => {
           return ''; // text input default value
         }}
@@ -186,9 +211,6 @@ export default class busnapper extends Component {
           rankby: 'distance',
         }}
 
-
-        //filterReverseGeocodingByTypes={['locality', 'administrative_area_level_3']} // filter the reverse geocoding results by types - ['locality', 'administrative_area_level_3'] if you want to display only cities
-
         debounce={200} // debounce the requests in ms. Set to 0 to remove debounce. By default 200ms.
       />
         <MapView
@@ -203,11 +225,15 @@ export default class busnapper extends Component {
         onRegionChange = {this.onRegionChange.bind(this)}
         ref = {ref => {this.map = ref; }}
         showsUserLocation = {true}
+        onRegionChangeComplete = {this.onRegionChangeComplete.bind(this)}
         >
         {this.state.busStopMarkers.map(busStopMarker => (
           <MapView.Marker
           key={busStopMarker.stopNum}
+          identifier={JSON.stringify(busStopMarker.stopNum)}
           coordinate={busStopMarker.coordinate}
+          onPressed={this.onMarkerSelected.bind(this)}
+          onSelect={this.onMarkerSelected.bind(this)}
           />
         ))}
         </MapView>
@@ -248,3 +274,18 @@ const styles = StyleSheet.create({
 });
 
 AppRegistry.registerComponent('busnapper', () => busnapper);
+
+function getDistanceKmBetween(coord1, coord2) {
+  var R = 6371; // Radius of the earth in km
+  var dLat = deg2rad(coord1.latitude - coord2.latitude);
+  var dLon = deg2rad(coord1.longitude - coord2.longitude);
+  var a =
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(coord1.latitude)) * Math.cos(deg2rad(coord2.latitude)) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function deg2rad(deg) {
+  return deg * (Math.PI/180)
+}
