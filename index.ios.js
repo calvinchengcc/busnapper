@@ -35,7 +35,7 @@ export default class busnapper extends Component {
   constructor(props) {
     super(props);
       this.state = {
-            targetStop: null,
+          isDestinationSet: false,
           initialPosition: {
           latitude: 49.264,
           longitude: -123.19,
@@ -69,21 +69,21 @@ export default class busnapper extends Component {
     
     componentWillMount() {
         navigator.geolocation.getCurrentPosition(
-                                                 (position) => {
-                                                 let lat = position.coords.latitude;
-                                                 let lon = position.coords.longitude;
-                                                 this.fetchStopData(lat, lon);
-                                                 this.state.initialPosition = {
-                                                 latitude: lat,
-                                                 longitude: lon,
-                                                 latitudeDelta: 0.02,
-                                                 longitudeDelta: 0.02
-                                                 };
-                                                 this.state.region = this.state.initialPosition;
-                                                 console.log("init lat: " + this.state.region.latitude + ", long: " + this.state.region.longitude);
-                                                 },
-                                                 (error) => alert(JSON.stringify(error)),
-                                                 );
+             (position) => {
+             let lat = position.coords.latitude;
+             let lon = position.coords.longitude;
+             this.fetchStopData(lat, lon);
+             this.state.initialPosition = {
+             latitude: lat,
+             longitude: lon,
+             latitudeDelta: 0.02,
+             longitudeDelta: 0.02
+             };
+             this.state.region = this.state.initialPosition;
+             console.log("init lat: " + this.state.region.latitude + ", long: " + this.state.region.longitude);
+             },
+             (error) => alert(JSON.stringify(error)),
+        );
         
         this.watchID = navigator.geolocation.watchPosition(
                (position) => {
@@ -129,7 +129,7 @@ export default class busnapper extends Component {
         }}).then((response) => {
           response.json().then((responseStops) => {
             if (typeof responseStops.map !== 'function') {
-              console.warn(`No stops found for (${latitude}, ${longitude}.`);
+              //console.warn(`No stops found for (${latitude}, ${longitude}.`);
               return;
             }
             let stops = responseStops.map((responseStop) => {
@@ -152,10 +152,6 @@ export default class busnapper extends Component {
         });
     }
 
-    buttonPressed(){
-         alert("Hi");
-    }
-
     componentWillUnmount() {
       navigator.geolocation.clearWatch(this.watchID);
     }
@@ -172,8 +168,7 @@ export default class busnapper extends Component {
             let lat = geocode.results[0].geometry.location.lat;
             let long = geocode.results[0].geometry.location.lng;
             this.setState({region: {latitude: lat, longitude: long, latitudeDelta: 0.02, longitudeDelta:0.02}});
-            this.setState({destMarker: {coordinate: {latitude: lat, longitude: long}}});
-            //console.log("destination to lat: " + this.state.destMarker.coordinate.latitude + ", long: " + this.state.destMarker.coordinate.longitude);
+            this.setState({isDestinationSet: false});   //about to set a new destination!
           }).catch((error) => {
             console.error(error);
           })
@@ -183,57 +178,14 @@ export default class busnapper extends Component {
     }
 
     onRegionChangeComplete(region) {
-        //region need not be implemented before user inputs destination address
-         //if(this.state.destination!==null) {
-            this.setState({region});
-            this.fetchStopData();  //ISSUE FIX: this.fetchStopData(region.latitude, region.longitude) -> region.latitude and region.longitude values were incorrect, so better to straight up use this.state.region
-        //}
+        this.setState({region});
+        if(this.state.isDestinationSet==false) {
+            this.fetchStopData();  //ISSUE FIX: this.fetchStopData(region.latitude, region.longitude) -> region.latitude and region.longitude values were incorrect,
+            console.log("fetching data while isDestinationSet is " + this.state.isDestinationSet);
+        }
         console.log("changed to lat: " + this.state.region.latitude + ", long: " + this.state.region.longitude);
     }
-
-//    onMarkerSelected(stopNum) {
-//     let stopMarker = this.state.busStopMarkers.find((marker) => {
-//     return JSON.stringify(marker.stopNum) == JSON.stringify(stopNum);
-//     });
-//      Alert.alert(
-//        stopMarker.name,
-//        `Do you want to set your destination as ` +
-//        `${stopMarker.name} [${stopMarker.routes}]?`,
-//        [
-//          {text: 'Nope.', onPress: () => console.log('Cancel pressed')},
-//          {text: 'Yes, let me nap!', onPress: () => {
-//            console.log('OK Pressed');
-//            this.setState({destination: stopMarker.coordinate});
-//         this.setState({destMarker: {coordinate: stopMarker.coordinate}});
-//            console.log("destination - lat: " + this.state.destination.latitude + ", long: " + this.state.destination.longitude);
-//          }}
-//        ]
-//      );
-//    }
-                 
-//     onMarkerSelected(event) {
-//     let stopMarker = this.state.busStopMarkers.find((marker) => {
-//         return JSON.stringify(marker.stopNum) == JSON.stringify(this.state.targetStop.stopNum);
-//     });
-//           let stopMarker = this.state.busStopMarkers.find((marker) => {
-//             return JSON.stringify(marker.stopNum) == event.nativeEvent.id;
-//           });
-//     Alert.alert(
-//                 stopMarker.name,
-//                 `Do you want to set your destination as ` +
-//                 `${stopMarker.name} [${stopMarker.routes}]?`,
-//                 [
-//                  {text: 'Nope.', onPress: () => console.log('Cancel pressed')},
-//                  {text: 'Yes, let me nap!', onPress: () => {
-//                  console.log('OK Pressed');
-//                  this.setState({destination: stopMarker.coordinate});
-//                  }}
-//                  ]
-//                 );
-//     }
-
-                
-            
+    
     render() {
          
          return (
@@ -261,18 +213,9 @@ export default class busnapper extends Component {
                              ref = {ref => {this.map = ref; }}
                              showsUserLocation = {true}
                              scrollEnabled = {true}
-                             onRegionChangeComplete = {(region) => {
-                             //alert("DRAG");
-                             const {initialRegion} = this.state.initialPosition;
-                             if (initialRegion && isEqual(initialRegion, region)) {
-                             return;
+                             onRegionChangeComplete = {
+                                this.onRegionChangeComplete.bind(this)
                              }
-                             
-                             this.setState({region});
-                             
-                             this.fetchStopData(region.latitude, region.longitude);
-                             console.log("changed to lat: " + this.state.region.latitude + ", long: " + this.state.region.longitude);
-                             }}
                              >
 
                          {this.state.busStopMarkers.map(busStopMarker => (
@@ -294,12 +237,21 @@ export default class busnapper extends Component {
                                                        {text: 'Yes, let me nap!', onPress: () => {
                                                        console.log('OK Pressed');
                                                        this.setState({destination: busStopMarker.coordinate});
+                                                       
+                                                       var busStopMarkers = [];
+                                                       busStopMarkers.push(busStopMarker);
+                                                       this.setState({busStopMarkers});
+                                                       
+                                                       this.setState({isDestinationSet: true});
+                                                       
+                                                       var coords = [];
+                                                       coords.push(this.state.lastPosition);
+                                                       coords.push(busStopMarker.coordinate);
+                                                       
+                                                       this.map.fitToCoordinates(coords, {edgePadding: {top: 50, right: 50, bottom: 50, left: 50}, animated: false});
                                                        }}
                                                        ]
                                                       );
-//                                      this.setState({targetStop: busStopMarker});
-//                                      this.onMarkerSelected.bind(this);
-                                      //() => {this.onMarkerSelected(busStopMarker.stopNum)}
                                   }}
                                   >
                                   <Text>	{busStopMarker.name} </Text>
@@ -315,13 +267,13 @@ export default class busnapper extends Component {
                              </MapView>
                              </View>
                          
-                             <View style = {styles.floatview}>
-                             <Button
-                             onPress={() => {navigator.pop()}}  //return to index 0 (search page)
-                             title="Destination Address"
-                             />
+                             <View style = {[{bottom: 10}, styles.overlay]}>
+                                 <Button
+                                onPress={() => {navigator.pop()}}  //return to index 0 (search page)
+                                 title="Destination Address"
+                                 />
                              </View>
-                             <View style = {styles.floatview2}>
+                             <View style = {[{bottom: 60}, styles.overlay]}>
                              <Button
                              onPress={() => {navigator.push(nav_routes[2])}}    //go to index 2 (not implemented yet)
                              title="Bus Route"
@@ -407,18 +359,16 @@ const styles = StyleSheet.create({
  fullscreen: {
  flex:1
  },
- floatview: {
- position: 'absolute',
- right: 0,
- bottom: 0
- },
  parent: {
  flex:1
  },
- floatview2: {
+ overlay: {
+ right: 10,
  position: 'absolute',
- right: 0,
- bottom: 30
+ backgroundColor: "white",
+ opacity: 0.8,
+ borderRadius: 20,
+ overflow: 'hidden'
  }
 });
 
