@@ -211,27 +211,26 @@ export default class busnapper extends Component {
 //      );
 //    }
                  
-     onMarkerSelected(event) {
-//                 alert("Hello there");
+//     onMarkerSelected(event) {
 //     let stopMarker = this.state.busStopMarkers.find((marker) => {
 //         return JSON.stringify(marker.stopNum) == JSON.stringify(this.state.targetStop.stopNum);
 //     });
-           let stopMarker = this.state.busStopMarkers.find((marker) => {
-             return JSON.stringify(marker.stopNum) == event.nativeEvent.id;
-           });
-     Alert.alert(
-                 stopMarker.name,
-                 `Do you want to set your destination as ` +
-                 `${stopMarker.name} [${stopMarker.routes}]?`,
-                 [
-                  {text: 'Nope.', onPress: () => console.log('Cancel pressed')},
-                  {text: 'Yes, let me nap!', onPress: () => {
-                  console.log('OK Pressed');
-                  this.setState({destination: stopMarker.coordinate});
-                  }}
-                  ]
-                 );
-     }
+//           let stopMarker = this.state.busStopMarkers.find((marker) => {
+//             return JSON.stringify(marker.stopNum) == event.nativeEvent.id;
+//           });
+//     Alert.alert(
+//                 stopMarker.name,
+//                 `Do you want to set your destination as ` +
+//                 `${stopMarker.name} [${stopMarker.routes}]?`,
+//                 [
+//                  {text: 'Nope.', onPress: () => console.log('Cancel pressed')},
+//                  {text: 'Yes, let me nap!', onPress: () => {
+//                  console.log('OK Pressed');
+//                  this.setState({destination: stopMarker.coordinate});
+//                  }}
+//                  ]
+//                 );
+//     }
 
                 
             
